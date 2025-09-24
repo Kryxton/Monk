@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>$MONK — Meme Creator</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Lobster&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-a:#edd7b6;
+  --bg-b:#e4cda8;
+  --muted:#4b433e;
+  --accent:#6b46c1;
+  --card:#fff;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:linear-gradient(180deg,var(--bg-a),var(--bg-b));
+  color:#111;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+a{color:inherit;text-decoration:none}
+*{-webkit-tap-highlight-color: rgba(0,0,0,0);}
+
+.container{max-width:980px;margin:20px auto;padding:18px}
+h1{font-weight:700;text-align:center;margin:6px 0;font-size:2rem}
+.sub{ text-align:center;color:var(--muted);margin-bottom:12px }
+
+/* banner */
+.banner img{width:100%;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.08);display:block;margin-bottom:12px}
+
+/* socials */
+.socials{display:flex;gap:10px;justify-content:center;margin:12px 0;flex-wrap:wrap}
+.socials a{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;cursor:pointer;transition:transform .15s}
+.socials a:hover{transform:translateY(-4px)}
+.socials img{width:72%;height:72%;object-fit:contain;display:block}
+
+/* ca */
+.ca {display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0;flex-wrap:wrap}
+.ca-box{display:inline-block;padding:10px 12px;border-radius:8px;background:linear-gradient(180deg,#fff0,#fff);border:1px solid rgba(0,0,0,0.06);font-family:monospace;max-width:calc(100% - 120px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.copy-btn{margin-left:8px;padding:8px 12px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer;flex:0 0 auto}
+
+/* Editor */
+.editor{margin-top:18px}
+.editor-title { text-align:center; font-size:1.6rem; margin: 6px 0 8px; font-weight:700; color:#241b1b; }
+.image-select{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:10px}
+.thumb{flex:0 0 calc(25% - 10px); width:auto; height:82px;border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid transparent;box-shadow:0 8px 18px rgba(0,0,0,0.06)}
+@media (max-width:640px){ .thumb{flex:0 0 calc(50% - 10px);} }
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.active{border-color:var(--accent);box-shadow:0 12px 30px rgba(107,70,193,0.08)}
+
+.photo-stage{
+  position:relative;margin:0 auto;border-radius:12px;overflow:hidden;background:var(--card);width:100%;max-width:720px;border:1px solid rgba(0,0,0,0.06);
+  touch-action:none;
+}
+.photo-stage img#baseImage{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+
+/* center guides */
+.guide.v{position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(107,70,193,0.18);transform:translateX(-50%);opacity:0;pointer-events:none;transition:opacity .12s}
+.guide.h{position:absolute;top:50%;left:0;right:0;height:2px;background:rgba(107,70,193,0.18);transform:translateY(-50%);opacity:0;pointer-events:none;transition:opacity .12s}
+.guide.show{opacity:1}
+
+/* text element */
+.draggable-text{
+  position:absolute;left:8px;top:8px;padding:4px 8px;border-radius:6px;cursor:grab;
+  user-select:text;white-space:pre-wrap;line-height:1.05;background:transparent;color:#111;font-size:26px;
+  font-family:Inter, system-ui, -apple-system, sans-serif;outline:none;border:0;touch-action:none;
+  transform-origin:center center;
+}
+/* small handles */
+.handle{position:absolute;width:14px;height:14px;background:rgba(0,0,0,0.7);border-radius:3px;z-index:40;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.handle.resize{right:-10px;bottom:-10px;transform:translate(50%,50%);background:#222}
+.handle.rotate{right:-10px;top:-10px;transform:translate(50%,-50%);background:#222}
+
+/* toolbar */
+.text-toolbar{
+  position:absolute;z-index:50;display:flex;gap:6px;padding:6px;border-radius:8px;background:rgba(255,255,255,0.96);box-shadow:0 6px 18px rgba(0,0,0,0.12);align-items:center;font-size:13px;
+}
+.text-toolbar button{padding:6px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);background:#fff;cursor:pointer}
+
+/* small popover that appears under toolbar */
+.toolbar-pop{
+  position:absolute;top:calc(100% + 8px);left:0;z-index:60;padding:8px;border-radius:8px;background:#fff;border:1px solid rgba(0,0,0,0.08);box-shadow:0 8px 24px rgba(0,0,0,0.08);display:none;
+  min-width:140px;
+}
+.toolbar-pop select, .toolbar-pop input[type="range"]{width:100%}
+
+/* controls */
+.controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px;align-items:center}
+.controls input, .controls select, .controls button{padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);background:#fff}
+.controls .primary{background:var(--accent);color:#fff;border:0;cursor:pointer}
+.controls input[type="color"]{width:28px;height:28px;padding:2px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);background:#fff;cursor:pointer;display:inline-block;vertical-align:middle}
+
+/* gallery */
+.gallery{margin-top:18px}
+.gallery-grid{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.gallery-grid img{width:150px;border-radius:10px;box-shadow:0 8px 18px rgba(0,0,0,0.06);cursor:pointer}
+
+/* chart */
+.chart{margin-top:18px;border-radius:12px;overflow:hidden;border:1px solid rgba(0,0,0,0.06)}
+.chart iframe{width:100%;height:520px;border:0}
+@media(max-width:720px){ .draggable-text{font-size:20px} .gallery-grid img{width:48%} .chart iframe{height:520px} }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>$MONK</h1>
+
+
+    <div class="banner"><img src="banner.jpeg" alt="banner"></div>
+
+    <div class="socials">
+      <a href="https://x.com/i/communities/1970039890025852982" title="Twitter"><img src="twitter.png" alt="twitter"></a>
+      <a href="https://dexscreener.com/solana/FbnNojMbLjMaCKvA8MzQLGg8UuNyqtDGc155ysd5iQmi" title="Dexscreener"><img src="dexscreener.png" alt="dexscreener"></a>
+      <a href="https://vm.tiktok.com/ZNHW8sptV7BTa-wvJ1w/" title="TikTok"><img src="tiktok.png" alt="tiktok"></a>
+      <a href="https://pump.fun/coin/CvydfY6akTPV8oV6jeZqBCuCyNswrrebWKavsxwspump" title="PumpFun"><img src="pumpfun.png" alt="pumpfun"></a>
+    </div>
+
+    <div class="ca">
+      <span class="ca-box" id="caAddress">CvydfY6akTPV8oV6jeZqBCuCyNswrrebWKavsxwspump</span>
+      <button id="copyCA" class="copy-btn">Copy</button>
+    </div>
+
+    <!-- Editor -->
+    <section class="editor">
+      <div class="editor-title">Create Meme</div>
+
+      <div class="image-select" id="imageSelect">
+        <div class="thumb active" data-src="1.png"><img src="1.png" alt=""></div>
+        <div class="thumb" data-src="2.png"><img src="2.png" alt=""></div>
+        <div class="thumb" data-src="3.png"><img src="3.png" alt=""></div>
+        <div class="thumb" data-src="4.png"><img src="4.png" alt=""></div>
+      </div>
+
+      <div class="photo-stage" id="photoStage" aria-live="polite">
+        <div class="guide v" id="guideV"></div>
+        <div class="guide h" id="guideH"></div>
+        <img id="baseImage" src="1.png" alt="base">
+        <div id="textToolbar" class="text-toolbar" style="display:none">
+          <button id="delText" title="Delete">Delete</button>
+          <button id="fontBtn" title="Font">Font</button>
+          <button id="resizeBtn" title="Resize">Resize</button>
+
+          <!-- Font popover -->
+          <div id="fontPop" class="toolbar-pop" aria-hidden="true">
+            <label style="font-size:12px;color:#666;margin-bottom:6px;display:block">Font</label>
+            <select id="fontPopSelect">
+              <option value="Inter, system-ui, -apple-system, sans-serif">Inter</option>
+              <option value="'Lobster', cursive">Lobster</option>
+              <option value="'Share Tech Mono', monospace">Share Tech Mono</option>
+              <option value="Arial,Helvetica,sans-serif">Arial</option>
+              <option value="Georgia,serif">Georgia</option>
+              <option value="'Courier New',monospace">Courier</option>
+            </select>
+          </div>
+
+          <!-- Resize popover -->
+          <div id="resizePop" class="toolbar-pop" aria-hidden="true">
+            <label style="font-size:12px;color:#666;margin-bottom:6px;display:block">Size</label>
+            <input id="resizePopRange" type="range" min="12" max="200" value="28">
+            <div style="display:flex;gap:8px;margin-top:6px;align-items:center;justify-content:space-between">
+              <input id="resizePopNumber" type="number" min="12" max="200" value="28" style="width:56px;padding:6px;border:1px solid rgba(0,0,0,0.06);border-radius:6px">
+              <button id="resizePopApply" style="padding:6px;border-radius:6px;background:var(--accent);color:#fff;border:0;cursor:pointer">Apply</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <input type="file" id="uploadImage" accept="image/*" style="display:none">
+        <button id="uploadBtn">Upload</button>
+
+        <input type="text" id="textInput" placeholder="Type text and press Add">
+        <select id="fontSelect" title="Font">
+          <option value="Inter, system-ui, -apple-system, sans-serif">Inter</option>
+          <option value="'Lobster', cursive">Lobster</option>
+          <option value="'Share Tech Mono', monospace">Share Tech Mono</option>
+          <option value="Arial,Helvetica,sans-serif">Arial</option>
+          <option value="Georgia,serif">Georgia</option>
+          <option value="'Courier New',monospace">Courier</option>
+        </select>
+
+        <input type="color" id="textColor" value="#111111" title="Text color">
+        <input type="range" id="textSize" min="12" max="160" value="28" title="Text size">
+
+        <button id="addTextBtn" class="primary">Add text</button>
+        <button id="downloadBtn" class="primary">Download</button>
+      </div>
+    </section>
+
+    <!-- Gallery -->
+    <section class="gallery">
+      <h3 style="text-align:center;margin-bottom:10px">Gallery</h3>
+      <div class="gallery-grid" id="galleryGrid">
+        <img src="meme1.jpeg" alt="">
+        <img src="meme2.jpeg" alt="">
+        <img src="meme3.jpeg" alt="">
+        <img src="meme4.jpeg" alt="">
+      </div>
+    </section>
+
+    <!-- Chart -->
+    <div class="chart">
+      <iframe id="dexFrame" src="about:blank" data-dex-src="https://dexscreener.com/solana/FbnNojMbLjMaCKvA8MzQLGg8UuNyqtDGc155ysd5iQmi" loading="lazy" referrerpolicy="no-referrer"></iframe>
+    </div>
+  </div>
+
+<script>
+/* ====== Elements & state ====== */
+const photoStage = document.getElementById('photoStage');
+const baseImage = document.getElementById('baseImage');
+const thumbs = document.querySelectorAll('.thumb');
+const guideV = document.getElementById('guideV');
+const guideH = document.getElementById('guideH');
+
+const textInput = document.getElementById('textInput');
+const fontSelect = document.getElementById('fontSelect');
+const textColor = document.getElementById('textColor');
+const textSize = document.getElementById('textSize');
+
+const addTextBtn = document.getElementById('addTextBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const toolbar = document.getElementById('textToolbar');
+const delTextBtn = document.getElementById('delText');
+
+const fontBtn = document.getElementById('fontBtn');
+const resizeBtn = document.getElementById('resizeBtn');
+const fontPop = document.getElementById('fontPop');
+const resizePop = document.getElementById('resizePop');
+const fontPopSelect = document.getElementById('fontPopSelect');
+const resizePopRange = document.getElementById('resizePopRange');
+const resizePopNumber = document.getElementById('resizePopNumber');
+const resizePopApply = document.getElementById('resizePopApply');
+
+const uploadBtn = document.getElementById('uploadBtn');
+const uploadInput = document.getElementById('uploadImage');
+const galleryGrid = document.getElementById('galleryGrid');
+
+let activeText = null;
+let pointerTouches = null;
+
+/* snap/resistance constants */
+const SNAP = 12;
+const RESIST_RANGE = 30;
+const RESIST_FACTOR = 0.75;
+const STOP_RANGE = 6;
+const MOVE_THRESHOLD = 6;
+
+/* default styles for new text */
+let DEFAULT_FONT = fontSelect.value;
+let DEFAULT_SIZE = parseInt(textSize.value,10) || 28;
+let DEFAULT_COLOR = textColor.value || '#111111';
+
+/* ====== Helpers ====== */
+function rgbToHex(rgb){ const m = rgb.match(/\d+/g); if(!m) return '#000000'; return '#'+m.slice(0,3).map(x=>('0'+parseInt(x).toString(16)).slice(-2)).join(''); }
+function copyTouch(t){ return {clientX: t.clientX, clientY: t.clientY}; }
+function distanceBetween(a,b){ const dx=a.clientX-b.clientX; const dy=a.clientY-b.clientY; return Math.sqrt(dx*dx+dy*dy); }
+function angleBetween(a,b){ return Math.atan2(b.clientY-a.clientY, b.clientX-a.clientX) * 180/Math.PI; }
+
+/* apply element's dataset style to inline CSS (robust) */
+function applyDatasetStyle(el){
+  if(!el) return;
+  const font = el.dataset.font || DEFAULT_FONT;
+  const size = (el.dataset.size || DEFAULT_SIZE) + 'px';
+  const color = el.dataset.color || DEFAULT_COLOR;
+  el.style.fontFamily = font;
+  el.style.fontSize = size;
+  el.style.color = color;
+  const rot = el.dataset.rotate || '0';
+  const sc = el.dataset.scale || '1';
+  el.style.transform = `rotate(${rot}deg) scale(${sc})`;
+}
+
+/* create text node with dataset-backed styling and robust event bindings */
+function createText(content='New text', opts = {}){
+  const el = document.createElement('div');
+  el.className = 'draggable-text';
+  el.contentEditable = true;
+  el.spellcheck = false;
+  el.innerText = content;
+  el.style.left = (opts.left ?? 12) + 'px';
+  el.style.top = (opts.top ?? 12) + 'px';
+
+  // set dataset (authoritative)
+  el.dataset.font = opts.font || DEFAULT_FONT;
+  el.dataset.size = opts.size || DEFAULT_SIZE;
+  el.dataset.color = opts.color || DEFAULT_COLOR;
+  el.dataset.rotate = opts.rotate || '0';
+  el.dataset.scale = opts.scale || '1';
+  el.dataset.width = opts.width || '';
+
+  if(opts.width) el.style.width = opts.width + 'px';
+
+  applyDatasetStyle(el);
+
+  // handles
+  const resize = document.createElement('div'); resize.className = 'handle resize';
+  const rotate = document.createElement('div'); rotate.className = 'handle rotate';
+  el.appendChild(resize); el.appendChild(rotate);
+
+  // reapply style on input (prevents contentEditable from stripping inline)
+  el.addEventListener('input', ()=> { applyDatasetStyle(el); });
+  el.addEventListener('focus', ()=> { setActive(el); applyDatasetStyle(el); });
+
+  attachDrag(el);
+  attachHandles(el, resize, rotate);
+  attachSelectBehavior(el);
+
+  photoStage.appendChild(el);
+  setTimeout(()=>{ el.focus(); placeCaretAtEnd(el); setActive(el); },50);
+  return el;
+}
+
+/* ====== Selection & toolbar ====== */
+function setActive(el){
+  if(activeText && activeText !== el){
+    activeText.style.outline = 'none';
+  }
+  activeText = el;
+  if(!el){ toolbar.style.display = 'none'; return; }
+
+  applyDatasetStyle(el); // ensure inline styles
+  const comp = getComputedStyle(el);
+  const curFont = el.dataset.font || comp.fontFamily;
+  const curSize = parseInt(el.dataset.size || parseInt(comp.fontSize,10) || DEFAULT_SIZE,10);
+  const curColor = el.dataset.color || rgbToHex(comp.color || DEFAULT_COLOR);
+
+  // set controls & defaults
+  fontSelect.value = curFont || DEFAULT_FONT;
+  fontPopSelect.value = curFont || DEFAULT_FONT;
+  textSize.value = curSize;
+  resizePopRange.value = curSize;
+  resizePopNumber.value = curSize;
+  textColor.value = curColor;
+
+  DEFAULT_FONT = fontSelect.value;
+  DEFAULT_SIZE = curSize;
+  DEFAULT_COLOR = curColor;
+
+  // position toolbar above element (clamped)
+  const rect = el.getBoundingClientRect();
+  const stageRect = photoStage.getBoundingClientRect();
+  const toolbarRect = toolbar.getBoundingClientRect();
+  let left = rect.left - stageRect.left + (rect.width - toolbarRect.width)/2;
+  left = Math.max(6, Math.min(stageRect.width - toolbarRect.width - 6, left));
+  let top = rect.top - stageRect.top - toolbarRect.height - 8;
+  if(top < 6) top = rect.top - stageRect.top + rect.height + 8;
+  toolbar.style.left = left + 'px';
+  toolbar.style.top = top + 'px';
+  toolbar.style.display = 'flex';
+}
+
+/* clicking outside deselects and closes pops */
+document.addEventListener('pointerdown',(e)=>{
+  if(e.target.closest('.draggable-text') || e.target.closest('#textToolbar') || e.target.closest('.toolbar-pop')) return;
+  setActive(null);
+  closeFontPop(); closeResizePop();
+});
+
+/* delete */
+delTextBtn.addEventListener('click', ()=> { if(activeText){ activeText.remove(); setActive(null); } });
+
+/* unified controls: update dataset + immediate apply */
+fontSelect.addEventListener('change', ()=>{
+  DEFAULT_FONT = fontSelect.value;
+  if(activeText){
+    activeText.dataset.font = DEFAULT_FONT;
+    applyDatasetStyle(activeText);
+  }
+});
+textSize.addEventListener('input', ()=>{
+  DEFAULT_SIZE = parseInt(textSize.value,10) || DEFAULT_SIZE;
+  if(activeText){
+    activeText.dataset.size = DEFAULT_SIZE;
+    applyDatasetStyle(activeText);
+  }
+});
+textColor.addEventListener('input', ()=>{
+  DEFAULT_COLOR = textColor.value;
+  if(activeText){
+    activeText.dataset.color = DEFAULT_COLOR;
+    applyDatasetStyle(activeText);
+  }
+});
+
+/* ====== toolbar popover toggles & wiring ====== */
+function openFontPop(){
+  fontPop.style.display = 'block';
+  fontPop.setAttribute('aria-hidden','false');
+  // sync with activeText or defaults
+  const cur = (activeText && (activeText.dataset.font || '')) || DEFAULT_FONT;
+  fontPopSelect.value = cur;
+}
+function closeFontPop(){ fontPop.style.display = 'none'; fontPop.setAttribute('aria-hidden','true'); }
+
+function openResizePop(){
+  resizePop.style.display = 'block';
+  resizePop.setAttribute('aria-hidden','false');
+  const cur = (activeText && (activeText.dataset.size || '')) || DEFAULT_SIZE;
+  resizePopRange.value = cur;
+  resizePopNumber.value = cur;
+}
+function closeResizePop(){ resizePop.style.display = 'none'; resizePop.setAttribute('aria-hidden','true'); }
+
+fontBtn.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const visible = fontPop.style.display === 'block';
+  closeResizePop();
+  visible ? closeFontPop() : openFontPop();
+});
+resizeBtn.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const visible = resizePop.style.display === 'block';
+  closeFontPop();
+  visible ? closeResizePop() : openResizePop();
+});
+
+// when selecting font from popover
+fontPopSelect.addEventListener('change', ()=>{
+  const f = fontPopSelect.value;
+  DEFAULT_FONT = f;
+  fontSelect.value = f;
+  if(activeText){
+    activeText.dataset.font = f;
+    applyDatasetStyle(activeText);
+  }
+  // keep popover open for quick multi-changes
+});
+
+// resize pop interactions
+resizePopRange.addEventListener('input', ()=>{
+  resizePopNumber.value = resizePopRange.value;
+});
+resizePopNumber.addEventListener('input', ()=>{
+  const v = Math.max(12, Math.min(200, Number(resizePopNumber.value) || 12));
+  resizePopNumber.value = v;
+  resizePopRange.value = v;
+});
+resizePopApply.addEventListener('click', ()=>{
+  const v = parseInt(resizePopNumber.value,10) || DEFAULT_SIZE;
+  DEFAULT_SIZE = v;
+  textSize.value = v;
+  if(activeText){
+    activeText.dataset.size = v;
+    applyDatasetStyle(activeText);
+  }
+  closeResizePop();
+});
+
+/* ====== Dragging (tap-to-edit vs drag-to-move) with hard stop and resistance ====== */
+function attachDrag(el){
+  el.style.touchAction = 'none';
+  let pointerId = null;
+  let startX=0, startY=0, startLeft=0, startTop=0;
+  let dragging=false, startedDrag=false;
+  let startSideX=0, startSideY=0;
+
+  el.addEventListener('pointerdown', (ev)=>{
+    el.setPointerCapture(ev.pointerId);
+    pointerId = ev.pointerId;
+    startX = ev.clientX; startY = ev.clientY;
+    const rect = el.getBoundingClientRect();
+    const pRect = photoStage.getBoundingClientRect();
+    startLeft = rect.left - pRect.left;
+    startTop = rect.top - pRect.top;
+    startSideX = (startLeft < (pRect.width - el.offsetWidth)/2) ? -1 : 1;
+    startSideY = (startTop < (pRect.height - el.offsetHeight)/2) ? -1 : 1;
+    dragging = false; startedDrag = false;
+    el.style.cursor = 'grabbing';
+    setActive(el);
+  });
+
+  function onMove(ev){
+    if(pointerId !== ev.pointerId) return;
+    const dx = ev.clientX - startX;
+    const dy = ev.clientY - startY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if(!dragging && dist > MOVE_THRESHOLD){
+      dragging = true;
+      startedDrag = true;
+      const rect = el.getBoundingClientRect();
+      const pRect = photoStage.getBoundingClientRect();
+      startLeft = rect.left - pRect.left;
+      startTop = rect.top - pRect.top;
+    }
+    if(!dragging) return;
+    ev.preventDefault();
+
+    const parentRect = photoStage.getBoundingClientRect();
+    let nx = startLeft + dx;
+    let ny = startTop + dy;
+    nx = Math.max(4, Math.min(parentRect.width - el.offsetWidth - 4, nx));
+    ny = Math.max(4, Math.min(parentRect.height - el.offsetHeight - 4, ny));
+
+    const centerX = (parentRect.width - el.offsetWidth)/2;
+    const centerY = (parentRect.height - el.offsetHeight)/2;
+
+    if(startSideX < 0 && nx >= centerX - STOP_RANGE){ nx = centerX; guideV.classList.add('show'); }
+    if(startSideX > 0 && nx <= centerX + STOP_RANGE){ nx = centerX; guideV.classList.add('show'); }
+    if(startSideY < 0 && ny >= centerY - STOP_RANGE){ ny = centerY; guideH.classList.add('show'); }
+    if(startSideY > 0 && ny <= centerY + STOP_RANGE){ ny = centerY; guideH.classList.add('show'); }
+
+    const dxFromCenter = nx - centerX;
+    const dyFromCenter = ny - centerY;
+    if(Math.abs(dxFromCenter) <= RESIST_RANGE && Math.abs(nx - centerX) > STOP_RANGE){
+      const t = Math.abs(dxFromCenter) / RESIST_RANGE;
+      const damp = RESIST_FACTOR + (1 - RESIST_FACTOR) * t;
+      nx = centerX + dxFromCenter * damp;
+      guideV.classList.add('show');
+    } else if(Math.abs(nx - centerX) > RESIST_RANGE){
+      guideV.classList.remove('show');
+    }
+    if(Math.abs(dyFromCenter) <= RESIST_RANGE && Math.abs(ny - centerY) > STOP_RANGE){
+      const t = Math.abs(dyFromCenter) / RESIST_RANGE;
+      const damp = RESIST_FACTOR + (1 - RESIST_FACTOR) * t;
+      ny = centerY + dyFromCenter * damp;
+      guideH.classList.add('show');
+    } else if(Math.abs(ny - centerY) > RESIST_RANGE){
+      guideH.classList.remove('show');
+    }
+
+    el.style.left = nx + 'px';
+    el.style.top = ny + 'px';
+    document.documentElement.style.touchAction = 'none';
+  }
+
+  function onUp(ev){
+    if(pointerId !== ev.pointerId) return;
+    if(!startedDrag){
+      el.focus();
+      placeCaretAtEnd(el);
+      setActive(el);
+    } else {
+      const parentRect = photoStage.getBoundingClientRect();
+      const centerX = (parentRect.width - el.offsetWidth)/2;
+      const centerY = (parentRect.height - el.offsetHeight)/2;
+      let nx = parseFloat(el.style.left || 0);
+      let ny = parseFloat(el.style.top || 0);
+      let snapped=false;
+      if(Math.abs(nx - centerX) <= SNAP){ el.style.left = centerX + 'px'; guideV.classList.add('show'); snapped=true; }
+      if(Math.abs(ny - centerY) <= SNAP){ el.style.top = centerY + 'px'; guideH.classList.add('show'); snapped=true; }
+      setTimeout(()=>{ guideV.classList.remove('show'); guideH.classList.remove('show'); document.documentElement.style.touchAction = ''; }, snapped?120:60);
+      setActive(el);
+    }
+    try{ el.releasePointerCapture(ev.pointerId); }catch(e){}
+    pointerId = null; dragging=false; startedDrag=false; el.style.cursor = 'grab';
+  }
+
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+
+  // pinch/rotate for touch
+  el.addEventListener('touchstart', (e)=> {
+    if(e.touches.length === 2){
+      e.preventDefault();
+      pointerTouches = {
+        el,
+        t0: copyTouch(e.touches[0]),
+        t1: copyTouch(e.touches[1]),
+        initialRotate: parseFloat(el.dataset.rotate||0),
+        initialScale: parseFloat(el.dataset.scale||1),
+        active: true
+      };
+      pointerTouches.initialDist = distanceBetween(pointerTouches.t0, pointerTouches.t1);
+      pointerTouches.initialAngle = angleBetween(pointerTouches.t0, pointerTouches.t1);
+    }
+  }, {passive:false});
+
+  el.addEventListener('touchmove', (e)=>{
+    if(pointerTouches && pointerTouches.active && e.touches.length === 2){
+      e.preventDefault();
+      const p0 = copyTouch(e.touches[0]);
+      const p1 = copyTouch(e.touches[1]);
+      const newDist = distanceBetween(p0, p1);
+      const newAngle = angleBetween(p0, p1);
+      const scaleFactor = newDist / pointerTouches.initialDist;
+      const angleDiff = newAngle - pointerTouches.initialAngle;
+      el.dataset.scale = Math.max(0.3, Math.min(4, pointerTouches.initialScale * scaleFactor));
+      el.dataset.rotate = pointerTouches.initialRotate + angleDiff;
+      applyDatasetStyle(el);
+    }
+  }, {passive:false});
+
+  el.addEventListener('touchend', (e)=>{
+    if(pointerTouches && pointerTouches.active){
+      pointerTouches.active = false; pointerTouches = null;
+    }
+  }, {passive:false});
+}
+
+/* ====== handles for resize & rotate ====== */
+function attachHandles(el, resizeHandle, rotateHandle){
+  // RESIZE
+  resizeHandle.addEventListener('pointerdown', (ev)=>{
+    ev.stopPropagation(); ev.preventDefault();
+    resizeHandle.setPointerCapture(ev.pointerId);
+    const startX = ev.clientX;
+    const initW = el.offsetWidth;
+    const initLeft = parseFloat(el.style.left || 0);
+    const parentRect = photoStage.getBoundingClientRect();
+    function onMove(e){
+      e.preventDefault();
+      const dx = e.clientX - startX;
+      let newW = Math.max(40, initW + dx);
+      newW = Math.min(parentRect.width - initLeft - 8, newW);
+      el.style.width = newW + 'px';
+      el.dataset.width = newW;
+      if(activeText === el) setActive(el);
+    }
+    function onUp(e){ resizeHandle.releasePointerCapture(ev.pointerId); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  });
+
+  // ROTATE
+  rotateHandle.addEventListener('pointerdown', (ev)=>{
+    ev.stopPropagation(); ev.preventDefault();
+    rotateHandle.setPointerCapture(ev.pointerId);
+    const elRect = el.getBoundingClientRect();
+    const cx = elRect.left + elRect.width/2;
+    const cy = elRect.top + elRect.height/2;
+    const startAngle = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180/Math.PI;
+    const initRot = parseFloat(el.dataset.rotate||0);
+    function onMove(e){
+      e.preventDefault();
+      const curAngle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180/Math.PI;
+      const diff = curAngle - startAngle;
+      el.dataset.rotate = initRot + diff;
+      applyDatasetStyle(el);
+      if(activeText === el) setActive(el);
+    }
+    function onUp(e){ rotateHandle.releasePointerCapture(ev.pointerId); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  });
+}
+
+/* selection helpers */
+function attachSelectBehavior(el){
+  el.addEventListener('pointerdown', ()=>{}); // behavior handled in attachDrag
+  el.addEventListener('focus', ()=> setActive(el));
+}
+
+/* caret helper */
+function placeCaretAtEnd(el){
+  el.focus();
+  if(typeof window.getSelection !== "undefined" && typeof document.createRange !== "undefined"){
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+}
+
+/* ====== add text control ====== */
+addTextBtn.addEventListener('click', ()=> {
+  const txt = textInput.value.trim() || 'New text';
+  createText(txt, { font: DEFAULT_FONT, size: DEFAULT_SIZE, color: DEFAULT_COLOR });
+  textInput.value = '';
+});
+textInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter'){ e.preventDefault(); addTextBtn.click(); } });
+
+/* ====== thumbnails & upload & gallery handlers (unchanged) ====== */
+thumbs.forEach(t => {
+  t.addEventListener('click', () => {
+    thumbs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    baseImage.src = t.dataset.src;
+  });
+});
+uploadBtn.addEventListener('click', ()=> uploadInput.click());
+uploadInput.addEventListener('change', (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const url = URL.createObjectURL(f);
+  baseImage.src = url;
+  thumbs.forEach(x=>x.classList.remove('active'));
+  baseImage.addEventListener('load', ()=> URL.revokeObjectURL(url), {once:true});
+});
+document.querySelectorAll('.gallery-grid img').forEach(img => img.addEventListener('click', ()=> { baseImage.src = img.src; }));
+
+/* ====== export (keeps element font-family & datasets) ====== */
+downloadBtn && downloadBtn.addEventListener('click', ()=> {
+  exportHighQuality((blob)=>{
+    const url = URL.createObjectURL(blob);
+    addToGallery(url, blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'monk-meme.png'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 5000);
+  });
+});
+
+function exportHighQuality(callback){
+  const iw = baseImage.naturalWidth || baseImage.width;
+  const ih = baseImage.naturalHeight || baseImage.height;
+  if(!iw || !ih){ alert('Image not loaded yet.'); return; }
+  const canvas = document.createElement('canvas');
+  canvas.width = iw; canvas.height = ih;
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+
+  const stageRect = photoStage.getBoundingClientRect();
+  const scaleX = canvas.width / stageRect.width;
+  const scaleY = canvas.height / stageRect.height;
+  const scaleAvg = (scaleX + scaleY)/2;
+
+  const texts = Array.from(photoStage.querySelectorAll('.draggable-text'));
+  texts.forEach(el=>{
+    // use dataset authoritative values
+    const fontFamily = el.dataset.font || DEFAULT_FONT;
+    const displaySize = parseInt(el.dataset.size || parseInt(getComputedStyle(el).fontSize,10) || DEFAULT_SIZE,10);
+    const scale = parseFloat(el.dataset.scale || 1);
+    const exportSize = Math.max(6, Math.round(displaySize * scale * scaleAvg));
+    ctx.font = `${exportSize}px ${fontFamily}`;
+    ctx.fillStyle = el.dataset.color || '#000';
+    ctx.textBaseline = 'top';
+
+    const rect = el.getBoundingClientRect();
+    const posX = (rect.left - stageRect.left) * scaleX;
+    const posY = (rect.top - stageRect.top) * scaleY;
+    const maxW = (el.offsetWidth || rect.width) * scaleX;
+
+    const words = el.innerText.replace(/\r/g,'').split('\n');
+    const lines = [];
+    words.forEach(par => {
+      const wordsInPar = par.split(' ');
+      let line = '';
+      wordsInPar.forEach(w => {
+        const test = line ? (line + ' ' + w) : w;
+        const width = ctx.measureText(test).width;
+        if(width > maxW && line){ lines.push(line); line = w; } else { line = test; }
+      });
+      lines.push(line);
+    });
+
+    const rot = parseFloat(el.dataset.rotate || 0) * Math.PI/180;
+    if(Math.abs(rot) > 0.0001){
+      const textBlockW = maxW;
+      const textBlockH = lines.length * exportSize * 1.05;
+      const cx = posX + textBlockW/2;
+      const cy = posY + textBlockH/2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rot);
+      for(let i=0;i<lines.length;i++){
+        ctx.fillText(lines[i], -textBlockW/2, -textBlockH/2 + i * exportSize * 1.05);
+      }
+      ctx.restore();
+    } else {
+      for(let i=0;i<lines.length;i++){
+        ctx.fillText(lines[i], posX, posY + i * exportSize * 1.05);
+      }
+    }
+  });
+
+  canvas.toBlob((blob)=> callback(blob, canvas), 'image/png', 0.95);
+}
+
+/* gallery helper */
+function addToGallery(url, blob){
+  const img = document.createElement('img');
+  img.src = url; img.alt = 'exported';
+  img.addEventListener('click', ()=> window.open(url,'_blank'));
+  galleryGrid.prepend(img);
+}
+
+/* Dex iframe loader */
+(function loadDex(){
+  const dex = document.getElementById('dexFrame');
+  const src = dex && dex.getAttribute('data-dex-src');
+  if(dex && src && src !== 'about:blank') dex.src = src;
+  else if(dex){
+    const placeholder = `<html><body style="font-family:Inter,Arial;color:#333;display:flex;align-items:center;justify-content:center;height:100%"><div style="text-align:center;color:#666;padding:18px">Replace data-dex-src with your Dexscreener URL.</div></body></html>`;
+    dex.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(placeholder);
+  }
+})();
+
+/* CA copy */
+document.getElementById('copyCA').addEventListener('click', async ()=>{
+  const txt = document.getElementById('caAddress').innerText.trim();
+  try{ await navigator.clipboard.writeText(txt); alert('Copied'); } catch(e){ alert('Copy failed'); }
+});
+
+/* keep toolbar positioned on resize/scroll */
+window.addEventListener('resize', ()=> { if(activeText) setActive(activeText); });
+window.addEventListener('scroll', ()=> { if(activeText) setActive(activeText); });
+
+</script>
+</body>
+</html>
