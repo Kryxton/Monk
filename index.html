@@ -108,7 +108,7 @@ h1{font-weight:700;text-align:center;margin:6px 0;font-size:2rem}
 <body>
   <div class="container">
     <h1>$MONK</h1>
-
+    <div class="sub">wise-monkey vibes — create & share</div>
 
     <div class="banner"><img src="banner.jpeg" alt="banner"></div>
 
@@ -373,24 +373,17 @@ fontSelect.addEventListener('change', ()=>{
 });
 textSize.addEventListener('input', ()=>{
   DEFAULT_SIZE = parseInt(textSize.value,10) || DEFAULT_SIZE;
-  if(activeText){
-    activeText.dataset.size = DEFAULT_SIZE;
-    applyDatasetStyle(activeText);
-  }
+  if(activeText) { activeText.dataset.size = DEFAULT_SIZE; applyDatasetStyle(activeText); }
 });
 textColor.addEventListener('input', ()=>{
   DEFAULT_COLOR = textColor.value;
-  if(activeText){
-    activeText.dataset.color = DEFAULT_COLOR;
-    applyDatasetStyle(activeText);
-  }
+  if(activeText){ activeText.dataset.color = DEFAULT_COLOR; applyDatasetStyle(activeText); }
 });
 
 /* ====== toolbar popover toggles & wiring ====== */
 function openFontPop(){
   fontPop.style.display = 'block';
   fontPop.setAttribute('aria-hidden','false');
-  // sync with activeText or defaults
   const cur = (activeText && (activeText.dataset.font || '')) || DEFAULT_FONT;
   fontPopSelect.value = cur;
 }
@@ -427,7 +420,6 @@ fontPopSelect.addEventListener('change', ()=>{
     activeText.dataset.font = f;
     applyDatasetStyle(activeText);
   }
-  // keep popover open for quick multi-changes
 });
 
 // resize pop interactions
@@ -443,10 +435,7 @@ resizePopApply.addEventListener('click', ()=>{
   const v = parseInt(resizePopNumber.value,10) || DEFAULT_SIZE;
   DEFAULT_SIZE = v;
   textSize.value = v;
-  if(activeText){
-    activeText.dataset.size = v;
-    applyDatasetStyle(activeText);
-  }
+  if(activeText){ activeText.dataset.size = v; applyDatasetStyle(activeText); }
   closeResizePop();
 });
 
@@ -684,84 +673,154 @@ uploadInput.addEventListener('change', (e)=>{
 });
 document.querySelectorAll('.gallery-grid img').forEach(img => img.addEventListener('click', ()=> { baseImage.src = img.src; }));
 
-/* ====== export (keeps element font-family & datasets) ====== */
-downloadBtn && downloadBtn.addEventListener('click', ()=> {
-  exportHighQuality((blob)=>{
-    const url = URL.createObjectURL(blob);
-    addToGallery(url, blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'monk-meme.png'; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=> URL.revokeObjectURL(url), 5000);
-  });
+/* ====== EXPORT: high-quality blob (natural image resolution) and save to device ====== */
+downloadBtn && downloadBtn.addEventListener('click', async ()=> {
+  try{
+    const blob = await exportHighQualityToBlob();
+    if(!blob){ alert('Export failed'); return; }
+    await saveBlobToDevice(blob, 'monk-meme.png');
+  } catch(err){
+    console.error(err);
+    alert('Export failed: ' + (err && err.message ? err.message : err));
+  }
 });
 
-function exportHighQuality(callback){
-  const iw = baseImage.naturalWidth || baseImage.width;
-  const ih = baseImage.naturalHeight || baseImage.height;
-  if(!iw || !ih){ alert('Image not loaded yet.'); return; }
-  const canvas = document.createElement('canvas');
-  canvas.width = iw; canvas.height = ih;
-  const ctx = canvas.getContext('2d');
+/**
+ * Renders the current stage to a PNG Blob using the base image's natural resolution.
+ * Returns a Promise<Blob>.
+ */
+function exportHighQualityToBlob(){
+  return new Promise((resolve, reject)=>{
+    const iw = baseImage.naturalWidth || baseImage.width;
+    const ih = baseImage.naturalHeight || baseImage.height;
+    if(!iw || !ih){ reject(new Error('Image not loaded yet.')); return; }
 
-  ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+    const canvas = document.createElement('canvas');
+    canvas.width = iw;
+    canvas.height = ih;
+    const ctx = canvas.getContext('2d');
 
-  const stageRect = photoStage.getBoundingClientRect();
-  const scaleX = canvas.width / stageRect.width;
-  const scaleY = canvas.height / stageRect.height;
-  const scaleAvg = (scaleX + scaleY)/2;
+    // draw base image full resolution
+    ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
 
-  const texts = Array.from(photoStage.querySelectorAll('.draggable-text'));
-  texts.forEach(el=>{
-    // use dataset authoritative values
-    const fontFamily = el.dataset.font || DEFAULT_FONT;
-    const displaySize = parseInt(el.dataset.size || parseInt(getComputedStyle(el).fontSize,10) || DEFAULT_SIZE,10);
-    const scale = parseFloat(el.dataset.scale || 1);
-    const exportSize = Math.max(6, Math.round(displaySize * scale * scaleAvg));
-    ctx.font = `${exportSize}px ${fontFamily}`;
-    ctx.fillStyle = el.dataset.color || '#000';
-    ctx.textBaseline = 'top';
+    // mapping ratios: stage -> canvas
+    const stageRect = photoStage.getBoundingClientRect();
+    const scaleX = canvas.width / stageRect.width;
+    const scaleY = canvas.height / stageRect.height;
 
-    const rect = el.getBoundingClientRect();
-    const posX = (rect.left - stageRect.left) * scaleX;
-    const posY = (rect.top - stageRect.top) * scaleY;
-    const maxW = (el.offsetWidth || rect.width) * scaleX;
+    // render text elements using dataset authoritative values
+    const texts = Array.from(photoStage.querySelectorAll('.draggable-text'));
+    texts.forEach(el=>{
+      // ensure inline style is applied
+      applyDatasetStyle(el);
+      const style = getComputedStyle(el);
+      const displaySize = parseFloat(style.fontSize) || DEFAULT_SIZE;
+      const scale = parseFloat(el.dataset.scale || 1);
+      const exportSize = Math.max(6, Math.round(displaySize * scale * ((scaleX + scaleY)/2)));
 
-    const words = el.innerText.replace(/\r/g,'').split('\n');
-    const lines = [];
-    words.forEach(par => {
-      const wordsInPar = par.split(' ');
-      let line = '';
-      wordsInPar.forEach(w => {
-        const test = line ? (line + ' ' + w) : w;
-        const width = ctx.measureText(test).width;
-        if(width > maxW && line){ lines.push(line); line = w; } else { line = test; }
+      const family = el.dataset.font || el.style.fontFamily || style.fontFamily || 'Inter, system-ui';
+      const fontWeight = style.fontWeight || '700';
+      const fontStyle = style.fontStyle || 'normal';
+      ctx.font = `${fontStyle} ${fontWeight} ${exportSize}px ${family}`;
+      ctx.fillStyle = el.dataset.color || style.color || '#000';
+      ctx.textBaseline = 'top';
+
+      // position and wrapping
+      const rect = el.getBoundingClientRect();
+      const posX = (rect.left - stageRect.left) * scaleX;
+      const posY = (rect.top - stageRect.top) * scaleY;
+      const maxW = (el.offsetWidth || rect.width) * scaleX;
+
+      // build lines (wrap by measuring)
+      const words = el.innerText.replace(/\r/g,'').split('\n');
+      const lines = [];
+      words.forEach(par => {
+        const wordsInPar = par.split(' ');
+        let line = '';
+        wordsInPar.forEach(w => {
+          const test = line ? (line + ' ' + w) : w;
+          const width = ctx.measureText(test).width;
+          if(width > maxW && line){
+            lines.push(line);
+            line = w;
+          } else {
+            line = test;
+          }
+        });
+        lines.push(line);
       });
-      lines.push(line);
+
+      const rot = parseFloat(el.dataset.rotate || 0) * Math.PI/180;
+      if(Math.abs(rot) > 0.0001){
+        const textBlockW = maxW;
+        const textBlockH = lines.length * exportSize * 1.05;
+        const cx = posX + textBlockW/2;
+        const cy = posY + textBlockH/2;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+        for(let i=0;i<lines.length;i++){
+          ctx.fillText(lines[i], -textBlockW/2, -textBlockH/2 + i * exportSize * 1.05);
+        }
+        ctx.restore();
+      } else {
+        for(let i=0;i<lines.length;i++){
+          ctx.fillText(lines[i], posX, posY + i * exportSize * 1.05);
+        }
+      }
     });
 
-    const rot = parseFloat(el.dataset.rotate || 0) * Math.PI/180;
-    if(Math.abs(rot) > 0.0001){
-      const textBlockW = maxW;
-      const textBlockH = lines.length * exportSize * 1.05;
-      const cx = posX + textBlockW/2;
-      const cy = posY + textBlockH/2;
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rot);
-      for(let i=0;i<lines.length;i++){
-        ctx.fillText(lines[i], -textBlockW/2, -textBlockH/2 + i * exportSize * 1.05);
-      }
-      ctx.restore();
-    } else {
-      for(let i=0;i<lines.length;i++){
-        ctx.fillText(lines[i], posX, posY + i * exportSize * 1.05);
-      }
-    }
+    // finalize blob
+    canvas.toBlob((blob)=> {
+      if(blob) resolve(blob);
+      else reject(new Error('Canvas toBlob returned null'));
+    }, 'image/png', 1.0);
   });
-
-  canvas.toBlob((blob)=> callback(blob, canvas), 'image/png', 0.95);
 }
 
-/* gallery helper */
+/**
+ * Attempts to save blob to device:
+ * 1) If Web Share API with files is supported, share the file (opens native share/save).
+ * 2) Otherwise fallback to anchor download and opening the blob URL for manual save.
+ */
+async function saveBlobToDevice(blob, filename){
+  try{
+    const file = new File([blob], filename, { type: 'image/png' });
+
+    // prefer native share/save on mobile where possible
+    if(navigator.canShare && navigator.canShare({ files: [file] })){
+      try{
+        await navigator.share({ files: [file], title: '$MONK Meme', text: 'Generated with $MONK meme creator' });
+        return;
+      } catch(err){
+        // share may be rejected by user or fail -> fallback to download
+        console.warn('navigator.share failed, falling back to download', err);
+      }
+    }
+
+    // Fallback: download anchor
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    // iOS Safari sometimes ignores download attribute; open blob in new tab to allow long-press save
+    setTimeout(()=> {
+      try { window.open(url, '_blank'); } catch(e){ /* ignore */ }
+      // revoke after short delay
+      setTimeout(()=> URL.revokeObjectURL(url), 2000);
+    }, 300);
+
+  } catch(err){
+    console.error('saveBlobToDevice error', err);
+    throw err;
+  }
+}
+
+/* gallery helper (still present for site preview but NOT used for downloads) */
 function addToGallery(url, blob){
   const img = document.createElement('img');
   img.src = url; img.alt = 'exported';
