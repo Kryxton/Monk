@@ -11,8 +11,17 @@
   --bg-a:#edd7b6;
   --bg-b:#e4cda8;
   --muted:#4b433e;
-  --accent:#6b46c1;
+
+  /* Warm bright brown for all clickable items (buttons, inputs, selects, toggles) */
+  --btn-bg: #b76a2a;      /* primary warm brown */
+  --btn-foreground: #ffffff; /* text on buttons */
+  --btn-border: rgba(0,0,0,0.12);
+
+  /* Keep legacy name for compatibility */
+  --accent: var(--btn-bg);
+
   --card:#fff;
+  --toggle-active: rgba(255,240,230,0.6);
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -40,8 +49,8 @@ h1{font-weight:700;text-align:center;margin:6px 0;font-size:2rem}
 
 /* ca */
 .ca {display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0;flex-wrap:wrap}
-.ca-box{display:inline-block;padding:10px 12px;border-radius:8px;background:linear-gradient(180deg,#fff0,#fff);border:1px solid rgba(0,0,0,0.06);font-family:monospace;max-width:calc(100% - 120px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.copy-btn{margin-left:8px;padding:8px 12px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer;flex:0 0 auto}
+.ca-box{display:inline-block;padding:10px 12px;border-radius:8px;background:linear-gradient(180deg,#fff0,#fff);border:1px solid rgba(0,0,0,0.06);font-family:monospace;max-width:calc(100% - 160px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.copy-btn{margin-left:8px;padding:8px 12px;border-radius:6px;border:0;background:var(--btn-bg);color:var(--btn-foreground);cursor:pointer;flex:0 0 auto;border:1px solid var(--btn-border)}
 
 /* Editor */
 .editor{margin-top:18px}
@@ -50,7 +59,7 @@ h1{font-weight:700;text-align:center;margin:6px 0;font-size:2rem}
 .thumb{flex:0 0 calc(25% - 10px); width:auto; height:82px;border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid transparent;box-shadow:0 8px 18px rgba(0,0,0,0.06)}
 @media (max-width:640px){ .thumb{flex:0 0 calc(50% - 10px);} }
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.thumb.active{border-color:var(--accent);box-shadow:0 12px 30px rgba(107,70,193,0.08)}
+.thumb.active{border-color:var(--accent);box-shadow:0 12px 30px rgba(0,0,0,0.08)}
 
 .photo-stage{
   position:relative;margin:0 auto;border-radius:12px;overflow:hidden;background:var(--card);width:100%;max-width:720px;border:1px solid rgba(0,0,0,0.06);
@@ -79,7 +88,11 @@ h1{font-weight:700;text-align:center;margin:6px 0;font-size:2rem}
 .text-toolbar{
   position:absolute;z-index:50;display:flex;gap:6px;padding:6px;border-radius:8px;background:rgba(255,255,255,0.96);box-shadow:0 6px 18px rgba(0,0,0,0.12);align-items:center;font-size:13px;
 }
-.text-toolbar button{padding:6px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);background:#fff;cursor:pointer}
+.text-toolbar button{padding:6px;border-radius:6px;border:1px solid var(--btn-border);background:var(--btn-bg);color:var(--btn-foreground);cursor:pointer}
+.text-toolbar button.toggle-active{background:var(--toggle-active);border-color:rgba(107,70,193,0.15)}
+
+/* inline color picker slightly smaller */
+.text-toolbar input[type="color"]{width:28px;height:28px;padding:2px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);background:var(--btn-bg);cursor:pointer}
 
 /* small popover that appears under toolbar */
 .toolbar-pop{
@@ -90,9 +103,16 @@ h1{font-weight:700;text-align:center;margin:6px 0;font-size:2rem}
 
 /* controls */
 .controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px;align-items:center}
-.controls input, .controls select, .controls button{padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);background:#fff}
-.controls .primary{background:var(--accent);color:#fff;border:0;cursor:pointer}
-.controls input[type="color"]{width:28px;height:28px;padding:2px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);background:#fff;cursor:pointer;display:inline-block;vertical-align:middle}
+.controls input, .controls select, .controls button{padding:8px;border-radius:8px;border:1px solid var(--btn-border);background:var(--btn-bg);color:var(--btn-foreground)}
+/* make the color pickers consistent but allow the actual swatch to show */
+.controls input[type="color"]{width:36px;height:36px;padding:2px;border-radius:6px;border:1px solid var(--btn-border);background:var(--btn-bg);cursor:pointer;display:inline-block;vertical-align:middle}
+.controls button.toggle-active{background:var(--toggle-active);border-color:rgba(107,70,193,0.15)}
+
+/* ensure editable text input placeholder is readable */
+.controls input[type="text"]::placeholder{color:rgba(255,255,255,0.85)}
+
+/* focus outlines for accessibility */
+.controls input:focus, .controls select:focus, .controls button:focus, .text-toolbar button:focus { outline:2px solid rgba(0,0,0,0.06); outline-offset:2px; }
 
 /* gallery */
 .gallery{margin-top:18px}
@@ -114,8 +134,10 @@ h1{font-weight:700;text-align:center;margin:6px 0;font-size:2rem}
 
     <div class="socials">
       <a href="https://x.com/i/communities/1970039890025852982" title="Twitter"><img src="twitter.png" alt="twitter"></a>
+ <a href="https://x.com/wisemonkonsol" title="Twitter"><img src="twitter.png" alt="twitter"></a>
       <a href="https://dexscreener.com/solana/FbnNojMbLjMaCKvA8MzQLGg8UuNyqtDGc155ysd5iQmi" title="Dexscreener"><img src="dexscreener.png" alt="dexscreener"></a>
-      <a href="https://vm.tiktok.com/ZNHW8sptV7BTa-wvJ1w/" title="TikTok"><img src="tiktok.png" alt="tiktok"></a>
+      <a href="https://vm.tiktok.com/@wisemonkeyonsol" title="TikTok"><img src="tiktok.png" alt="tiktok"></a>
+   <a href="https://vm.tiktok.com/ZNHW8sptV7BTa-wvJ1w/" title="TikTok"><img src="tiktok.png" alt="tiktok"></a>
       <a href="https://pump.fun/coin/CvydfY6akTPV8oV6jeZqBCuCyNswrrebWKavsxwspump" title="PumpFun"><img src="pumpfun.png" alt="pumpfun"></a>
     </div>
 
@@ -144,6 +166,14 @@ h1{font-weight:700;text-align:center;margin:6px 0;font-size:2rem}
           <button id="fontBtn" title="Font">Font</button>
           <button id="resizeBtn" title="Resize">Resize</button>
 
+          <!-- inline color picker -->
+          <input id="toolbarColor" type="color" title="Color">
+
+          <!-- inline style toggles -->
+          <button id="tbBold" title="Bold">B</button>
+          <button id="tbItalic" title="Italic">I</button>
+          <button id="tbUnderline" title="Underline">U</button>
+
           <!-- Font popover -->
           <div id="fontPop" class="toolbar-pop" aria-hidden="true">
             <label style="font-size:12px;color:#666;margin-bottom:6px;display:block">Font</label>
@@ -163,7 +193,7 @@ h1{font-weight:700;text-align:center;margin:6px 0;font-size:2rem}
             <input id="resizePopRange" type="range" min="12" max="200" value="28">
             <div style="display:flex;gap:8px;margin-top:6px;align-items:center;justify-content:space-between">
               <input id="resizePopNumber" type="number" min="12" max="200" value="28" style="width:56px;padding:6px;border:1px solid rgba(0,0,0,0.06);border-radius:6px">
-              <button id="resizePopApply" style="padding:6px;border-radius:6px;background:var(--accent);color:#fff;border:0;cursor:pointer">Apply</button>
+              <button id="resizePopApply" style="padding:6px;border-radius:6px;background:var(--btn-bg);color:var(--btn-foreground);border:0;cursor:pointer">Apply</button>
             </div>
           </div>
         </div>
@@ -185,6 +215,15 @@ h1{font-weight:700;text-align:center;margin:6px 0;font-size:2rem}
 
         <input type="color" id="textColor" value="#111111" title="Text color">
         <input type="range" id="textSize" min="12" max="160" value="28" title="Text size">
+
+        <!-- main toggles for bold/italic/underline -->
+        <button id="boldBtn" title="Bold">B</button>
+        <button id="italicBtn" title="Italic">I</button>
+        <button id="underlineBtn" title="Underline">U</button>
+
+        <!-- Undo / Redo -->
+        <button id="undoBtn" title="Undo">Undo</button>
+        <button id="redoBtn" title="Redo">Redo</button>
 
         <button id="addTextBtn" class="primary">Add text</button>
         <button id="downloadBtn" class="primary">Download</button>
@@ -235,6 +274,18 @@ const resizePopRange = document.getElementById('resizePopRange');
 const resizePopNumber = document.getElementById('resizePopNumber');
 const resizePopApply = document.getElementById('resizePopApply');
 
+const toolbarColor = document.getElementById('toolbarColor');
+const tbBold = document.getElementById('tbBold');
+const tbItalic = document.getElementById('tbItalic');
+const tbUnderline = document.getElementById('tbUnderline');
+
+const boldBtn = document.getElementById('boldBtn');
+const italicBtn = document.getElementById('italicBtn');
+const underlineBtn = document.getElementById('underlineBtn');
+
+const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
+
 const uploadBtn = document.getElementById('uploadBtn');
 const uploadInput = document.getElementById('uploadImage');
 const galleryGrid = document.getElementById('galleryGrid');
@@ -253,9 +304,110 @@ const MOVE_THRESHOLD = 6;
 let DEFAULT_FONT = fontSelect.value;
 let DEFAULT_SIZE = parseInt(textSize.value,10) || 28;
 let DEFAULT_COLOR = textColor.value || '#111111';
+let DEFAULT_BOLD = false;
+let DEFAULT_ITALIC = false;
+let DEFAULT_UNDERLINE = false;
+
+/* ====== HISTORY (undo/redo) ====== */
+const HISTORY_LIMIT = 80;
+let history = [];
+let historyIndex = -1;
+let pushTimer = null;
+
+function captureState(){
+  const texts = Array.from(photoStage.querySelectorAll('.draggable-text')).map(el=>({
+    text: el.innerText,
+    left: parseFloat(el.style.left || 0),
+    top: parseFloat(el.style.top || 0),
+    font: el.dataset.font || DEFAULT_FONT,
+    size: parseInt(el.dataset.size || parseInt(getComputedStyle(el).fontSize,10) || DEFAULT_SIZE,10),
+    color: el.dataset.color || rgbToHex(getComputedStyle(el).color || DEFAULT_COLOR),
+    rotate: parseFloat(el.dataset.rotate || 0),
+    scale: parseFloat(el.dataset.scale || 1),
+    width: el.dataset.width || '',
+    bold: el.dataset.bold === 'true',
+    italic: el.dataset.italic === 'true',
+    underline: el.dataset.underline === 'true',
+    html: el.innerHTML // keep HTML (linebreaks)
+  }));
+  return {
+    baseImage: baseImage.src,
+    texts
+  };
+}
+function statesEqual(a,b){
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+function pushState(skipDuplicate = true){
+  try{
+    const state = captureState();
+    if(skipDuplicate && historyIndex >= 0){
+      const prev = history[historyIndex];
+      if(statesEqual(prev, state)) return;
+    }
+    // if we have undone some steps, truncate future
+    if(historyIndex < history.length - 1) history = history.slice(0, historyIndex + 1);
+    history.push(state);
+    historyIndex++;
+    // enforce limit
+    if(history.length > HISTORY_LIMIT){
+      history.shift();
+      historyIndex--;
+    }
+    updateUndoRedoUI();
+  }catch(e){
+    console.warn('pushState error', e);
+  }
+}
+function updateUndoRedoUI(){
+  undoBtn.disabled = historyIndex <= 0;
+  redoBtn.disabled = historyIndex >= history.length - 1;
+}
+function renderState(state){
+  // set base image
+  baseImage.src = state.baseImage || '';
+  // remove existing texts
+  Array.from(photoStage.querySelectorAll('.draggable-text')).forEach(t=>t.remove());
+  // recreate each text WITHOUT pushing a new history entry
+  state.texts.forEach(t=>{
+    createText(t.text, {
+      left: Math.round(t.left),
+      top: Math.round(t.top),
+      font: t.font,
+      size: t.size,
+      color: t.color,
+      rotate: t.rotate,
+      scale: t.scale,
+      width: t.width,
+      bold: t.bold,
+      italic: t.italic,
+      underline: t.underline,
+      skipHistory: true,
+      html: t.html
+    });
+  });
+  setActive(null);
+  updateUndoRedoUI();
+}
+function undo(){
+  if(historyIndex <= 0) return;
+  historyIndex--;
+  renderState(history[historyIndex]);
+}
+function redo(){
+  if(historyIndex >= history.length - 1) return;
+  historyIndex++;
+  renderState(history[historyIndex]);
+}
+
+/* schedule a push (debounced) for frequent handlers) */
+function schedulePush(delay = 380){
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(()=> pushState(true), delay);
+}
 
 /* ====== Helpers ====== */
-function rgbToHex(rgb){ const m = rgb.match(/\d+/g); if(!m) return '#000000'; return '#'+m.slice(0,3).map(x=>('0'+parseInt(x).toString(16)).slice(-2)).join(''); }
+function rgbToHex(rgb){ const m = (''+rgb).match(/\d+/g); if(!m) return '#000000'; return '#'+m.slice(0,3).map(x=>('0'+parseInt(x).toString(16)).slice(-2)).join(''); }
 function copyTouch(t){ return {clientX: t.clientX, clientY: t.clientY}; }
 function distanceBetween(a,b){ const dx=a.clientX-b.clientX; const dy=a.clientY-b.clientY; return Math.sqrt(dx*dx+dy*dy); }
 function angleBetween(a,b){ return Math.atan2(b.clientY-a.clientY, b.clientX-a.clientX) * 180/Math.PI; }
@@ -266,9 +418,17 @@ function applyDatasetStyle(el){
   const font = el.dataset.font || DEFAULT_FONT;
   const size = (el.dataset.size || DEFAULT_SIZE) + 'px';
   const color = el.dataset.color || DEFAULT_COLOR;
+  const bold = (el.dataset.bold === 'true');
+  const italic = (el.dataset.italic === 'true');
+  const underline = (el.dataset.underline === 'true');
+
   el.style.fontFamily = font;
   el.style.fontSize = size;
   el.style.color = color;
+  el.style.fontWeight = bold ? '700' : '400';
+  el.style.fontStyle = italic ? 'italic' : 'normal';
+  el.style.textDecoration = underline ? 'underline' : 'none';
+
   const rot = el.dataset.rotate || '0';
   const sc = el.dataset.scale || '1';
   el.style.transform = `rotate(${rot}deg) scale(${sc})`;
@@ -280,17 +440,22 @@ function createText(content='New text', opts = {}){
   el.className = 'draggable-text';
   el.contentEditable = true;
   el.spellcheck = false;
-  el.innerText = content;
+  // use html if provided to preserve line breaks
+  if(opts.html !== undefined) el.innerHTML = opts.html;
+  else el.innerText = content;
   el.style.left = (opts.left ?? 12) + 'px';
   el.style.top = (opts.top ?? 12) + 'px';
 
-  // set dataset (authoritative)
+  // dataset authoritative
   el.dataset.font = opts.font || DEFAULT_FONT;
   el.dataset.size = opts.size || DEFAULT_SIZE;
   el.dataset.color = opts.color || DEFAULT_COLOR;
   el.dataset.rotate = opts.rotate || '0';
   el.dataset.scale = opts.scale || '1';
   el.dataset.width = opts.width || '';
+  el.dataset.bold = (opts.bold === true) ? 'true' : (opts.bold === false ? 'false' : (DEFAULT_BOLD ? 'true' : 'false'));
+  el.dataset.italic = (opts.italic === true) ? 'true' : (opts.italic === false ? 'false' : (DEFAULT_ITALIC ? 'true' : 'false'));
+  el.dataset.underline = (opts.underline === true) ? 'true' : (opts.underline === false ? 'false' : (DEFAULT_UNDERLINE ? 'true' : 'false'));
 
   if(opts.width) el.style.width = opts.width + 'px';
 
@@ -302,7 +467,9 @@ function createText(content='New text', opts = {}){
   el.appendChild(resize); el.appendChild(rotate);
 
   // reapply style on input (prevents contentEditable from stripping inline)
-  el.addEventListener('input', ()=> { applyDatasetStyle(el); });
+  el.addEventListener('input', ()=> { applyDatasetStyle(el); schedulePush(); });
+  el.addEventListener('blur', ()=> { schedulePush(120); });
+
   el.addEventListener('focus', ()=> { setActive(el); applyDatasetStyle(el); });
 
   attachDrag(el);
@@ -311,6 +478,9 @@ function createText(content='New text', opts = {}){
 
   photoStage.appendChild(el);
   setTimeout(()=>{ el.focus(); placeCaretAtEnd(el); setActive(el); },50);
+
+  // push to history (unless skipHistory)
+  if(!opts.skipHistory) pushState(true);
   return el;
 }
 
@@ -327,6 +497,9 @@ function setActive(el){
   const curFont = el.dataset.font || comp.fontFamily;
   const curSize = parseInt(el.dataset.size || parseInt(comp.fontSize,10) || DEFAULT_SIZE,10);
   const curColor = el.dataset.color || rgbToHex(comp.color || DEFAULT_COLOR);
+  const curBold = el.dataset.bold === 'true';
+  const curItalic = el.dataset.italic === 'true';
+  const curUnderline = el.dataset.underline === 'true';
 
   // set controls & defaults
   fontSelect.value = curFont || DEFAULT_FONT;
@@ -335,10 +508,22 @@ function setActive(el){
   resizePopRange.value = curSize;
   resizePopNumber.value = curSize;
   textColor.value = curColor;
+  toolbarColor.value = curColor;
 
   DEFAULT_FONT = fontSelect.value;
   DEFAULT_SIZE = curSize;
   DEFAULT_COLOR = curColor;
+  DEFAULT_BOLD = curBold;
+  DEFAULT_ITALIC = curItalic;
+  DEFAULT_UNDERLINE = curUnderline;
+
+  // toggle UI states
+  boldBtn.classList.toggle('toggle-active', curBold);
+  italicBtn.classList.toggle('toggle-active', curItalic);
+  underlineBtn.classList.toggle('toggle-active', curUnderline);
+  tbBold.classList.toggle('toggle-active', curBold);
+  tbItalic.classList.toggle('toggle-active', curItalic);
+  tbUnderline.classList.toggle('toggle-active', curUnderline);
 
   // position toolbar above element (clamped)
   const rect = el.getBoundingClientRect();
@@ -361,23 +546,82 @@ document.addEventListener('pointerdown',(e)=>{
 });
 
 /* delete */
-delTextBtn.addEventListener('click', ()=> { if(activeText){ activeText.remove(); setActive(null); } });
+delTextBtn.addEventListener('click', ()=> { if(activeText){ activeText.remove(); setActive(null); pushState(true); } });
 
-/* unified controls: update dataset + immediate apply */
+/* unified controls: update defaults + selected element */
 fontSelect.addEventListener('change', ()=>{
   DEFAULT_FONT = fontSelect.value;
   if(activeText){
     activeText.dataset.font = DEFAULT_FONT;
     applyDatasetStyle(activeText);
+    pushState(true);
   }
 });
 textSize.addEventListener('input', ()=>{
   DEFAULT_SIZE = parseInt(textSize.value,10) || DEFAULT_SIZE;
   if(activeText) { activeText.dataset.size = DEFAULT_SIZE; applyDatasetStyle(activeText); }
+  schedulePush();
 });
 textColor.addEventListener('input', ()=>{
   DEFAULT_COLOR = textColor.value;
   if(activeText){ activeText.dataset.color = DEFAULT_COLOR; applyDatasetStyle(activeText); }
+  schedulePush();
+});
+
+/* main toggles */
+function toggleMainBold(){
+  DEFAULT_BOLD = !DEFAULT_BOLD;
+  boldBtn.classList.toggle('toggle-active', DEFAULT_BOLD);
+  if(activeText){ activeText.dataset.bold = DEFAULT_BOLD ? 'true' : 'false'; applyDatasetStyle(activeText); pushState(true); }
+}
+function toggleMainItalic(){
+  DEFAULT_ITALIC = !DEFAULT_ITALIC;
+  italicBtn.classList.toggle('toggle-active', DEFAULT_ITALIC);
+  if(activeText){ activeText.dataset.italic = DEFAULT_ITALIC ? 'true' : 'false'; applyDatasetStyle(activeText); pushState(true); }
+}
+function toggleMainUnderline(){
+  DEFAULT_UNDERLINE = !DEFAULT_UNDERLINE;
+  underlineBtn.classList.toggle('toggle-active', DEFAULT_UNDERLINE);
+  if(activeText){ activeText.dataset.underline = DEFAULT_UNDERLINE ? 'true' : 'false'; applyDatasetStyle(activeText); pushState(true); }
+}
+boldBtn.addEventListener('click', toggleMainBold);
+italicBtn.addEventListener('click', toggleMainItalic);
+underlineBtn.addEventListener('click', toggleMainUnderline);
+
+/* toolbar color + toggles */
+toolbarColor.addEventListener('input', ()=>{
+  if(activeText){ activeText.dataset.color = toolbarColor.value; applyDatasetStyle(activeText); textColor.value = toolbarColor.value; DEFAULT_COLOR = toolbarColor.value; }
+  schedulePush();
+});
+tbBold.addEventListener('click', ()=>{
+  if(!activeText) return;
+  const cur = activeText.dataset.bold === 'true';
+  activeText.dataset.bold = cur ? 'false' : 'true';
+  applyDatasetStyle(activeText);
+  tbBold.classList.toggle('toggle-active', activeText.dataset.bold === 'true');
+  DEFAULT_BOLD = activeText.dataset.bold === 'true';
+  boldBtn.classList.toggle('toggle-active', DEFAULT_BOLD);
+  pushState(true);
+});
+tbItalic.addEventListener('click', ()=>{
+  if(!activeText) return;
+  const cur = activeText.dataset.italic === 'true';
+  activeText.dataset.italic = cur ? 'false' : 'true';
+  applyDatasetStyle(activeText);
+  tbItalic.classList.toggle('toggle-active', activeText.dataset.italic === 'true');
+  DEFAULT_ITALIC = activeText.dataset.italic === 'true';
+  italicBtn.classList.toggle('toggle-active', DEFAULT_ITALIC);
+  pushState(true);
+});
+tbUnderline.addEventListener('click', ()=>{
+  if(!activeText) return;
+  const cur = activeText.dataset.underline === 'true';
+  activeText.dataset.underline = cur ? 'false' : 'true';
+  applyDatasetStyle(activeText);
+  tbUnderline.classList.toggle('toggle-active', activeText.dataset.underline === 'true');
+  DEFAULT_UNDERLINE = activeText.dataset.underline === 'true';
+  underlineBtn.classList.toggle('toggle-active', DEFAULT_UNDERLINE);
+  pushState(true);
 });
 
 /* ====== toolbar popover toggles & wiring ====== */
@@ -419,6 +663,7 @@ fontPopSelect.addEventListener('change', ()=>{
   if(activeText){
     activeText.dataset.font = f;
     applyDatasetStyle(activeText);
+    pushState(true);
   }
 });
 
@@ -435,7 +680,7 @@ resizePopApply.addEventListener('click', ()=>{
   const v = parseInt(resizePopNumber.value,10) || DEFAULT_SIZE;
   DEFAULT_SIZE = v;
   textSize.value = v;
-  if(activeText){ activeText.dataset.size = v; applyDatasetStyle(activeText); }
+  if(activeText){ activeText.dataset.size = v; applyDatasetStyle(activeText); pushState(true); }
   closeResizePop();
 });
 
@@ -533,6 +778,8 @@ function attachDrag(el){
       if(Math.abs(ny - centerY) <= SNAP){ el.style.top = centerY + 'px'; guideH.classList.add('show'); snapped=true; }
       setTimeout(()=>{ guideV.classList.remove('show'); guideH.classList.remove('show'); document.documentElement.style.touchAction = ''; }, snapped?120:60);
       setActive(el);
+      // push final position to history
+      pushState(true);
     }
     try{ el.releasePointerCapture(ev.pointerId); }catch(e){}
     pointerId = null; dragging=false; startedDrag=false; el.style.cursor = 'grab';
@@ -576,6 +823,7 @@ function attachDrag(el){
   el.addEventListener('touchend', (e)=>{
     if(pointerTouches && pointerTouches.active){
       pointerTouches.active = false; pointerTouches = null;
+      pushState(true);
     }
   }, {passive:false});
 }
@@ -599,7 +847,7 @@ function attachHandles(el, resizeHandle, rotateHandle){
       el.dataset.width = newW;
       if(activeText === el) setActive(el);
     }
-    function onUp(e){ resizeHandle.releasePointerCapture(ev.pointerId); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); }
+    function onUp(e){ resizeHandle.releasePointerCapture(ev.pointerId); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); pushState(true); }
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
   });
@@ -621,7 +869,7 @@ function attachHandles(el, resizeHandle, rotateHandle){
       applyDatasetStyle(el);
       if(activeText === el) setActive(el);
     }
-    function onUp(e){ rotateHandle.releasePointerCapture(ev.pointerId); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); }
+    function onUp(e){ rotateHandle.releasePointerCapture(ev.pointerId); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); pushState(true); }
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
   });
@@ -649,7 +897,7 @@ function placeCaretAtEnd(el){
 /* ====== add text control ====== */
 addTextBtn.addEventListener('click', ()=> {
   const txt = textInput.value.trim() || 'New text';
-  createText(txt, { font: DEFAULT_FONT, size: DEFAULT_SIZE, color: DEFAULT_COLOR });
+  createText(txt, { font: DEFAULT_FONT, size: DEFAULT_SIZE, color: DEFAULT_COLOR, bold: DEFAULT_BOLD, italic: DEFAULT_ITALIC, underline: DEFAULT_UNDERLINE });
   textInput.value = '';
 });
 textInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter'){ e.preventDefault(); addTextBtn.click(); } });
@@ -660,6 +908,7 @@ thumbs.forEach(t => {
     thumbs.forEach(x => x.classList.remove('active'));
     t.classList.add('active');
     baseImage.src = t.dataset.src;
+    pushState(true);
   });
 });
 uploadBtn.addEventListener('click', ()=> uploadInput.click());
@@ -670,8 +919,22 @@ uploadInput.addEventListener('change', (e)=>{
   baseImage.src = url;
   thumbs.forEach(x=>x.classList.remove('active'));
   baseImage.addEventListener('load', ()=> URL.revokeObjectURL(url), {once:true});
+  pushState(true);
 });
-document.querySelectorAll('.gallery-grid img').forEach(img => img.addEventListener('click', ()=> { baseImage.src = img.src; }));
+document.querySelectorAll('.gallery-grid img').forEach(img => img.addEventListener('click', ()=> { baseImage.src = img.src; pushState(true); }));
+
+/* ====== Undo / Redo wiring ====== */
+undoBtn.addEventListener('click', ()=> undo());
+redoBtn.addEventListener('click', ()=> redo());
+document.addEventListener('keydown', (e)=>{
+  const mod = e.metaKey || e.ctrlKey;
+  if(!mod) return;
+  if(e.key.toLowerCase() === 'z' && !e.shiftKey){
+    e.preventDefault(); undo();
+  } else if((e.key.toLowerCase() === 'y') || (e.key.toLowerCase() === 'z' && e.shiftKey)){
+    e.preventDefault(); redo();
+  }
+});
 
 /* ====== EXPORT: high-quality blob (natural image resolution) and save to device ====== */
 downloadBtn && downloadBtn.addEventListener('click', async ()=> {
@@ -719,9 +982,9 @@ function exportHighQualityToBlob(){
       const exportSize = Math.max(6, Math.round(displaySize * scale * ((scaleX + scaleY)/2)));
 
       const family = el.dataset.font || el.style.fontFamily || style.fontFamily || 'Inter, system-ui';
-      const fontWeight = style.fontWeight || '700';
-      const fontStyle = style.fontStyle || 'normal';
-      ctx.font = `${fontStyle} ${fontWeight} ${exportSize}px ${family}`;
+      const weight = (el.dataset.bold === 'true') ? '700' : '400';
+      const fontStyle = (el.dataset.italic === 'true') ? 'italic' : 'normal';
+      ctx.font = `${fontStyle} ${weight} ${exportSize}px ${family}`;
       ctx.fillStyle = el.dataset.color || style.color || '#000';
       ctx.textBaseline = 'top';
 
@@ -760,12 +1023,24 @@ function exportHighQualityToBlob(){
         ctx.translate(cx, cy);
         ctx.rotate(rot);
         for(let i=0;i<lines.length;i++){
-          ctx.fillText(lines[i], -textBlockW/2, -textBlockH/2 + i * exportSize * 1.05);
+          const line = lines[i];
+          ctx.fillText(line, -textBlockW/2, -textBlockH/2 + i * exportSize * 1.05);
+          if(el.dataset.underline === 'true'){
+            const metrics = ctx.measureText(line);
+            const y = -textBlockH/2 + i * exportSize * 1.05 + exportSize * 1.02;
+            ctx.fillRect(-textBlockW/2, y, metrics.width, Math.max(1, Math.round(exportSize * 0.07)));
+          }
         }
         ctx.restore();
       } else {
         for(let i=0;i<lines.length;i++){
-          ctx.fillText(lines[i], posX, posY + i * exportSize * 1.05);
+          const line = lines[i];
+          ctx.fillText(line, posX, posY + i * exportSize * 1.05);
+          if(el.dataset.underline === 'true'){
+            const metrics = ctx.measureText(line);
+            const y = posY + i * exportSize * 1.05 + exportSize * 1.02;
+            ctx.fillRect(posX, y, metrics.width, Math.max(1, Math.round(exportSize * 0.07)));
+          }
         }
       }
     });
@@ -820,7 +1095,7 @@ async function saveBlobToDevice(blob, filename){
   }
 }
 
-/* gallery helper (still present for site preview but NOT used for downloads) */
+/* gallery helper */
 function addToGallery(url, blob){
   const img = document.createElement('img');
   img.src = url; img.alt = 'exported';
@@ -848,6 +1123,9 @@ document.getElementById('copyCA').addEventListener('click', async ()=>{
 /* keep toolbar positioned on resize/scroll */
 window.addEventListener('resize', ()=> { if(activeText) setActive(activeText); });
 window.addEventListener('scroll', ()=> { if(activeText) setActive(activeText); });
+
+/* initial history snapshot after a short delay so everything's loaded */
+setTimeout(()=> pushState(true), 250);
 
 </script>
 </body>
